@@ -1,0 +1,107 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+import numpy as np
+
+# 한글 폰트 설정
+plt.rcParams['font.family'] = 'NanumGothic'
+plt.rcParams['axes.unicode_minus'] = False
+
+def load_and_process_data(file_path):
+    """CSV 파일을 로드하고 데이터를 처리합니다."""
+    try:
+        # CSV 파일 읽기 (인코딩 문제 해결)
+        df = pd.read_csv(file_path, encoding='utf-8')
+        
+        # 첫 번째 열을 날짜로 변환
+        df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+        
+        # 날짜와 평균기온 추출
+        dates = df.iloc[:, 0]
+        avg_temps = pd.to_numeric(df.iloc[:, 1], errors='coerce')
+        
+        # NaN 값 제거
+        valid_data = pd.DataFrame({
+            'date': dates,
+            'avg_temp': avg_temps
+        }).dropna()
+        
+        return valid_data
+        
+    except Exception as e:
+        print(f"데이터 로드 중 오류 발생: {e}")
+        return None
+
+def create_temperature_line_plot(data):
+    """평균기온 꺽은선 그래프를 생성합니다."""
+    if data is None or data.empty:
+        print("유효한 데이터가 없습니다.")
+        return
+    
+    # 그래프 크기 설정
+    plt.figure(figsize=(15, 8))
+    
+    # 꺽은선 그래프 그리기
+    plt.plot(data['date'], data['avg_temp'], 
+             marker='o', linewidth=2, markersize=4, 
+             color='#FF6B6B', alpha=0.8)
+    
+    # 그래프 꾸미기
+    plt.title('전주시 월별 평균기온 변화 (2015-2025)', 
+              fontsize=16, fontweight='bold', pad=20)
+    plt.xlabel('날짜', fontsize=12)
+    plt.ylabel('평균기온 (°C)', fontsize=12)
+    
+    # 격자 추가
+    plt.grid(True, alpha=0.3, linestyle='--')
+    
+    # x축 날짜 포맷 설정
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    plt.gca().xaxis.set_major_locator(mdates.YearLocator())
+    plt.gcf().autofmt_xdate()
+    
+    # y축 범위 설정 (적절한 여백 포함)
+    temp_min = data['avg_temp'].min()
+    temp_max = data['avg_temp'].max()
+    plt.ylim(temp_min - 2, temp_max + 2)
+    
+    # 통계 정보 추가
+    mean_temp = data['avg_temp'].mean()
+    max_temp = data['avg_temp'].max()
+    min_temp = data['avg_temp'].min()
+    
+    stats_text = f'평균: {mean_temp:.1f}°C\n최고: {max_temp:.1f}°C\n최저: {min_temp:.1f}°C'
+    plt.text(0.02, 0.98, stats_text, transform=plt.gca().transAxes,
+             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    # 그래프 저장
+    plt.tight_layout()
+    plt.savefig('jeonju_temperature_trend.png', dpi=300, bbox_inches='tight')
+    plt.show()
+    
+    print(f"그래프가 'jeonju_temperature_trend.png'로 저장되었습니다.")
+    print(f"데이터 기간: {data['date'].min().strftime('%Y-%m')} ~ {data['date'].max().strftime('%Y-%m')}")
+    print(f"총 데이터 포인트: {len(data)}개")
+
+def main():
+    """메인 함수"""
+    file_path = 'jeonju_temp_2015_2025.csv'
+    
+    print("전주시 기온 데이터 분석을 시작합니다...")
+    
+    # 데이터 로드 및 처리
+    data = load_and_process_data(file_path)
+    
+    if data is not None:
+        print(f"데이터 로드 완료: {len(data)}개의 데이터 포인트")
+        print(f"기간: {data['date'].min().strftime('%Y-%m')} ~ {data['date'].max().strftime('%Y-%m')}")
+        print(f"평균기온 범위: {data['avg_temp'].min():.1f}°C ~ {data['avg_temp'].max():.1f}°C")
+        
+        # 그래프 생성
+        create_temperature_line_plot(data)
+    else:
+        print("데이터 로드에 실패했습니다.")
+
+if __name__ == "__main__":
+    main()

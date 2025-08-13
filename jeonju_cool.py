@@ -1,0 +1,25 @@
+import csv
+
+f=open('jeonju_temp_1.csv','r',encoding='utf-8')
+data = csv.reader(f)
+header = next(data)
+
+min_temp = 999
+min_date = ''
+
+for row in data:
+    try:
+        # 빈 문자열이거나 None인 경우 처리
+        if row[6] == '' or row[6] is None:
+            continue  # 이 행은 건너뛰기
+        
+        temp = float(row[6])  # 7번째 열(인덱스 6)이 최저기온
+        if min_temp > temp:
+            min_temp = temp
+            min_date = row[0]
+    except (ValueError, IndexError):
+        continue  # 변환 실패시 건너뛰기
+
+f.close()
+
+print(f'기상 관측 전주의 최저 기온은 {min_temp}도 이며, {min_date}일 입니다.')

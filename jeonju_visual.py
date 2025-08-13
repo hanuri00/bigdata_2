@@ -1,0 +1,107 @@
+# file name : jeonju_temp_visual.py
+
+import csv
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+import numpy as np
+from matplotlib import font_manager, rc
+
+#한글폰트 사용
+font_path = 'NanumGothic.ttf'
+font_manager.fontManager.addfont(font_path)
+rc('font', family='NanumGothic')
+
+# 유니코드 마이너스 기호 사용 설정
+plt.rcParams['axes.unicode_minus'] = False
+
+# 데이터 저장용 리스트
+dates = []
+avg_temperatures = []
+max_temperatures = []
+min_temperatures = []
+
+# CSV 파일 읽기
+try:
+    f = open('jeonju_temp_2015_2025.csv', 'r', encoding='utf-8')
+    data = csv.reader(f)
+    header = next(data)
+
+    # 데이터 추출
+    for row in data:
+        if len(row) >= 6:  # 최소 6개 컬럼이 있는지 확인
+            try:
+                # 날짜 파싱 (첫 번째 컬럼이 날짜)
+                date_str = row[0]
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                
+                # 온도 데이터 파싱
+                avg_temp = float(row[1])  # 평균온도 (2열)
+                max_temp = float(row[2])  # 평균최고기온 (3열)
+                min_temp = float(row[5])  # 평균최저기온 (6열)
+                
+                dates.append(date_obj)
+                avg_temperatures.append(avg_temp)
+                max_temperatures.append(max_temp)
+                min_temperatures.append(min_temp)
+                
+            except (ValueError, IndexError) as e:
+                print(f"데이터 파싱 오류: {e}, 행: {row}")
+                continue
+
+    f.close()
+
+    # 그래프 그리기
+    plt.figure(figsize=(15, 8))
+    
+    # 3개의 꺽은선 그래프 그리기
+    plt.plot(dates, avg_temperatures, marker='o', linewidth=2, markersize=4, 
+             color='#FF6B6B', label='평균기온', alpha=0.8)
+    plt.plot(dates, max_temperatures, marker='s', linewidth=2, markersize=4, 
+             color='#4ECDC4', label='평균최고기온', alpha=0.8)
+    plt.plot(dates, min_temperatures, marker='^', linewidth=2, markersize=4, 
+             color='#45B7D1', label='평균최저기온', alpha=0.8)
+
+    # 그래프 꾸미기
+    plt.title('전주시 월별 온도 변화 (2015-2025)', fontsize=16, fontweight='bold', pad=20)
+    plt.xlabel('날짜', fontsize=12)
+    plt.ylabel('온도 (°C)', fontsize=12)
+    plt.grid(True, alpha=0.3, linestyle='--')
+    plt.legend(fontsize=11, loc='upper right')
+
+    # x축 날짜 포맷 설정
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    plt.gca().xaxis.set_major_locator(mdates.YearLocator())
+    plt.gcf().autofmt_xdate()
+
+    # y축 범위 설정 (모든 온도 데이터를 포함하도록)
+    all_temps = avg_temperatures + max_temperatures + min_temperatures
+    temp_min = min(all_temps)
+    temp_max = max(all_temps)
+    plt.ylim(temp_min - 3, temp_max + 3)
+
+    # 통계 정보 추가
+    avg_mean = np.mean(avg_temperatures)
+    max_mean = np.mean(max_temperatures)
+    min_mean = np.mean(min_temperatures)
+    
+    stats_text = f'평균기온 평균: {avg_mean:.1f}°C\n평균최고기온 평균: {max_mean:.1f}°C\n평균최저기온 평균: {min_mean:.1f}°C'
+    plt.text(0.02, 0.98, stats_text, transform=plt.gca().transAxes,
+             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+    # 그래프 저장
+    plt.tight_layout()
+    plt.savefig('jeonju_temperature_all.png', dpi=300, bbox_inches='tight')
+    plt.show()
+
+    print(f"그래프가 'jeonju_temperature_all.png'로 저장되었습니다.")
+    print(f"데이터 기간: {dates[0].strftime('%Y-%m')} ~ {dates[-1].strftime('%Y-%m')}")
+    print(f"총 데이터 포인트: {len(dates)}개")
+    print(f"평균기온 범위: {min(avg_temperatures):.1f}°C ~ {max(avg_temperatures):.1f}°C")
+    print(f"평균최고기온 범위: {min(max_temperatures):.1f}°C ~ {max(max_temperatures):.1f}°C")
+    print(f"평균최저기온 범위: {min(min_temperatures):.1f}°C ~ {max(min_temperatures):.1f}°C")
+
+except FileNotFoundError:
+    print("CSV 파일을 찾을 수 없습니다: jeonju_temp_2015_2025.csv")
+except Exception as e:
+    print(f"오류 발생: {e}")

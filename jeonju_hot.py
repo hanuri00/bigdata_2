@@ -1,0 +1,25 @@
+import csv
+
+f=open('jeonju_temp_1.csv','r',encoding='utf-8')
+data = csv.reader(f)
+header = next(data)
+
+max_temp = -999
+max_date = ''
+
+for row in data:
+    try:
+        # 빈 문자열이거나 None인 경우 처리
+        if row[3] == '' or row[3] is None:
+            continue  # 이 행은 건너뛰기
+        
+        temp = float(row[3])
+        if max_temp < temp:
+            max_temp = temp
+            max_date = row[0]
+    except (ValueError, IndexError):
+        continue  # 변환 실패시 건너뛰기
+
+f.close()
+
+print(f'기상 관측 전주의 최고 기온은 {max_temp}도 이며, {max_date}일 입니다.')
